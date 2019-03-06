@@ -39,7 +39,8 @@ contract IDRTokenERC20 {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) public {
+    ) 
+    public {
         decimals = _myDecimal;
         totalSupply = _myinitialSupply * (10 ** uint256(_myDecimal));  
         balanceOf[msg.sender] = totalSupply;                
@@ -48,20 +49,13 @@ contract IDRTokenERC20 {
     }
     
     function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
-        // Check if the sender has enough
         require(balanceOf[_from] >= _value);
-        // Check for overflows
         require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
         balanceOf[_from] -= _value;
-        // Add the same to the recipient
         balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
     
@@ -135,9 +129,6 @@ contract IDRT is owned, IDRTokenERC20 {
         Transfer(_from, _to, _value);
     }
 
-    /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
@@ -145,30 +136,21 @@ contract IDRT is owned, IDRTokenERC20 {
         Transfer(this, target, mintedAmount);
     }
 
-    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
-    /// @param target Address to be frozen
-    /// @param freeze either to freeze it or not
     function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
 
-    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-    /// @param newSellPrice Price the users can sell to the contract
-    /// @param newBuyPrice Price users can buy from the contract
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
 
-    /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
         uint amount = msg.value / buyPrice;               
         _transfer(this, msg.sender, amount);             
     }
 
-    /// @notice Sell `amount` tokens to contract
-    /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
         require(this.balance >= amount * sellPrice);      
         _transfer(msg.sender, this, amount);              
